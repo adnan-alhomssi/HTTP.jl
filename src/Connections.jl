@@ -467,6 +467,32 @@ function checkconnected(tcp)
     return true
 end
 
+function getconnection(::Type{T},
+                        host::AbstractString,
+                        port::AbstractString;
+                        # set keepalive to true by default since it's cheap and helps keep long-running requests/responses
+                        # alive in the face of heavy workloads where Julia's task scheduler might take a while to
+                        # keep up with midflight requests
+                        keepalive::Bool=true,
+                        readtimeout::Int=0,
+                        kw...)::T where {T <: IO}
+
+    p::UInt = isempty(port) ? UInt(80) : parse(UInt, port)
+    addrs = Sockets.getalladdrinfo(host)
+    err = ErrorException("failed to connect")
+    for addr in addrs
+        try
+            socket = T()
+            Sockets.connect!(socket, addr, p)
+            # keepalive && keepalive!(socket)
+            return socket
+        catch e
+            err = e
+        end
+    end
+    throw(err)
+end
+
 function getconnection(::Type{TCPSocket},
                        host::AbstractString,
                        port::AbstractString;
