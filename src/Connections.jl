@@ -540,14 +540,21 @@ end
 function getconnection(::Type{SSLStream{T}},
     host::AbstractString,
     port::AbstractString;
+    kw...)::SSLStream
+    return getconnection(SSLStream{TCPSocket}, host, port; kw...)
+end
+
+function getconnection(::Type{SSLStream{T}},
+    host::AbstractString,
+    port::AbstractString;
     kw...)::SSLStream{T} where {T}
     port = isempty(port) ? "443" : port
     @debugv 2 "SSL connect: $host:$port..."
     tcp = getconnection(T, host, port; kw...)
-    return sslconnection(SSLStream{T}, tcp, host; kw...)
+    return sslconnection(SSLStream, tcp, host; kw...)
 end
 
-function sslconnection(::Type{SSLStream{T}}, tcp::T, host::AbstractString;
+function sslconnection(::Type{SSLStream}, tcp::T, host::AbstractString;
     require_ssl_verification::Bool=NetworkOptions.verify_host(host, "SSL"),
     sslconfig::OpenSSL.SSLContext=nosslcontext[],
     kw...)::SSLStream{T} where {T}
@@ -555,7 +562,7 @@ function sslconnection(::Type{SSLStream{T}}, tcp::T, host::AbstractString;
         sslconfig = global_sslcontext()
     end
     # Create SSL stream.
-    ssl_stream = SSLStream(sslconfig, tcp)
+    ssl_stream = SSLStream{T}(sslconfig, tcp)
     OpenSSL.hostname!(ssl_stream, host)
     OpenSSL.connect(ssl_stream; require_ssl_verification)
     return ssl_stream

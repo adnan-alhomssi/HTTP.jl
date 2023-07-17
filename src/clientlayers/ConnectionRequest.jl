@@ -56,6 +56,10 @@ Otherwise leave it open so that it can be reused.
 """
 function connectionlayer(handler)
     return function connections(req; proxy=getproxy(req.url.scheme, req.url.host), socket_type::Type=TCPSocket, socket_type_tls::Type=SOCKET_TYPE_TLS[], readtimeout::Int=0, connect_timeout::Int=30, logerrors::Bool=false, logtag=nothing, kw...)
+        @debugv 1 "Retrieving connection"
+        if (SOCKET_TYPE_TLS[] != SSLStream)
+            socket_type = (SOCKET_TYPE_TLS[]).parameters[1]
+        end
         local io, stream
         if proxy !== nothing
             target_url = req.url
@@ -79,6 +83,7 @@ function connectionlayer(handler)
         try
             io = newconnection(IOType, url.host, url.port; readtimeout=readtimeout, connect_timeout=connect_timeout, kw...)
         catch e
+            @debugv 1 "H3 $e"
             if logerrors
                 err = current_exceptions_to_string()
                 @error err type=Symbol("HTTP.ConnectError") method=req.method url=req.url context=req.context logtag=logtag
@@ -88,6 +93,7 @@ function connectionlayer(handler)
         finally
             req.context[:connect_duration_ms] = get(req.context, :connect_duration_ms, 0.0) +  (time() - start_time) * 1000
         end
+        @debugv 1 "H4 - io = $(typeof(io))"
 
         shouldreuse = !(target_url.scheme in ("ws", "wss"))
         try
@@ -116,9 +122,11 @@ function connectionlayer(handler)
                 req.headers = filter(x->x.first != "Proxy-Authorization", req.headers)
             end
 
+            @debugv 1 "H5"
             stream = Stream(req.response, io)
             return handler(stream; readtimeout=readtimeout, logerrors=logerrors, logtag=logtag, kw...)
         catch e
+            @debugv 1 "H6 $e"
             # manually unwrap CompositeException since it's not defined as a "wrapper" exception by ExceptionUnwrapping
             while e isa CompositeException
                 e = e.exceptions[1]
@@ -143,6 +151,7 @@ function connectionlayer(handler)
             root_err isa HTTPError || throw(RequestError(req, root_err))
             throw(root_err)
         finally
+            @debugv 1 "Releasing"
             releaseconnection(io, shouldreuse; kw...)
             if !shouldreuse
                 @try Base.IOError close(io)
