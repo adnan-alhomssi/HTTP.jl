@@ -80,7 +80,6 @@ function connectionlayer(handler)
         try
             io = newconnection(IOType, url.host, url.port; readtimeout=readtimeout, connect_timeout=connect_timeout, kw...)
         catch e
-            @debugv 1 "H3 $e"
             if logerrors
                 err = current_exceptions_to_string()
                 @error err type=Symbol("HTTP.ConnectError") method=req.method url=req.url context=req.context logtag=logtag
@@ -90,7 +89,6 @@ function connectionlayer(handler)
         finally
             req.context[:connect_duration_ms] = get(req.context, :connect_duration_ms, 0.0) +  (time() - start_time) * 1000
         end
-        @debugv 1 "H4 - io = $(typeof(io))"
 
         shouldreuse = !(target_url.scheme in ("ws", "wss"))
         try
@@ -119,11 +117,9 @@ function connectionlayer(handler)
                 req.headers = filter(x->x.first != "Proxy-Authorization", req.headers)
             end
 
-            @debugv 1 "H5"
             stream = Stream(req.response, io)
             return handler(stream; readtimeout=readtimeout, logerrors=logerrors, logtag=logtag, kw...)
         catch e
-            @debugv 1 "H6 $e"
             # manually unwrap CompositeException since it's not defined as a "wrapper" exception by ExceptionUnwrapping
             while e isa CompositeException
                 e = e.exceptions[1]

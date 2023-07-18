@@ -564,6 +564,13 @@ function getconnection(::Type{SSLContext},
     return sslconnection(SSLContext, tcp, host; kw...)
 end
 
+function getconnection(::Type{SSLStream},
+    host::AbstractString,
+    port::AbstractString;
+    kw...)::SSLStream
+    return getconnection(SSLStream{TCPSocket}, host, port; kw...)
+end
+
 function getconnection(::Type{SSLStream{T}},
     host::AbstractString,
     port::AbstractString;
