@@ -24,6 +24,7 @@ end
 
 function open end
 
+const SOCKET_TYPE = Ref{Any}(TCPSocket)
 const SOCKET_TYPE_TLS = Ref{Any}(OpenSSL.SSLStream{TCPSocket})
 
 include("Conditions.jl")               ;using .Conditions
@@ -189,7 +190,9 @@ SSL arguments:
    the mbed TLS library.
    ["... peer must present a valid certificate, handshake is aborted if
      verification failed."](https://tls.mbed.org/api/ssl_8h.html#a5695285c9dbfefec295012b566290f37)
+ - `socket_type_tls = OpenSSL.SSLStream{TCPSocket}`, the type of socket to use for TLS connections. Defaults to `OpenSSL.SSLStream{TCPSocket}`.
  - `sslconfig = SSLConfig(require_ssl_verification)`
+ - `socket_type = `TCPSocket`, the type of socket to use for non-TLS connections. Defaults to `TCPSocket`.
  - `socket_type_tls = OpenSSL.SSLStream{TCPSocket}`, the type of socket to use for TLS connections. Defaults to `OpenSSL.SSLStream{TCPSocket}`.
     Also supported is passing `socket_type_tls = MbedTLS.SSLContext`. To change the global default, set `HTTP.SOCKET_TYPE_TLS[] = MbedTLS.SSLContext`.
 

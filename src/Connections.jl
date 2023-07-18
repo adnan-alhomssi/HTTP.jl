@@ -467,6 +467,7 @@ function checkconnected(tcp)
     return true
 end
 
+# AAA:
 function getconnection(::Type{T},
                         host::AbstractString,
                         port::AbstractString;
