@@ -567,13 +567,6 @@ end
 function getconnection(::Type{SSLStream{T}},
     host::AbstractString,
     port::AbstractString;
-    kw...)::SSLStream
-    return getconnection(SSLStream{TCPSocket}, host, port; kw...)
-end
-
-function getconnection(::Type{SSLStream{T}},
-    host::AbstractString,
-    port::AbstractString;
     kw...)::SSLStream{T} where {T}
     port = isempty(port) ? "443" : port
     @debugv 2 "SSL connect: $host:$port..."
