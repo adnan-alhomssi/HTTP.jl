@@ -85,7 +85,7 @@ end
 
 tcpsocket(io::SSLContext)::TCPSocket = io.bio
 tcpsocket(io::SSLStream) = io.io
-tcpsocket(io::TCPSocket)::TCPSocket = io
+tcpsocket(io::T) where {T <: IO} = io
 
 localport(io) = try !isopen(tcpsocket(io)) ? 0 :
                     Sockets.getsockname(tcpsocket(io))[2]
