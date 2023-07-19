@@ -467,34 +467,7 @@ function checkconnected(tcp)
     return true
 end
 
-# AAA:
 function getconnection(::Type{T},
-                        host::AbstractString,
-                        port::AbstractString;
-                        # set keepalive to true by default since it's cheap and helps keep long-running requests/responses
-                        # alive in the face of heavy workloads where Julia's task scheduler might take a while to
-                        # keep up with midflight requests
-                        keepalive::Bool=true,
-                        readtimeout::Int=0,
-                        kw...)::T where {T <: IO}
-
-    p::UInt = isempty(port) ? UInt(80) : parse(UInt, port)
-    addrs = Sockets.getalladdrinfo(host)
-    err = ErrorException("failed to connect")
-    for addr in addrs
-        try
-            socket = T()
-            Sockets.connect!(socket, addr, p)
-            # keepalive && keepalive!(socket)
-            return socket
-        catch e
-            err = e
-        end
-    end
-    throw(err)
-end
-
-function getconnection(::Type{TCPSocket},
                        host::AbstractString,
                        port::AbstractString;
                        # set keepalive to true by default since it's cheap and helps keep long-running requests/responses
@@ -502,7 +475,7 @@ function getconnection(::Type{TCPSocket},
                        # keep up with midflight requests
                        keepalive::Bool=true,
                        readtimeout::Int=0,
-                       kw...)::TCPSocket
+                       kw...)::T where {T <: IO}
 
     p::UInt = isempty(port) ? UInt(80) : parse(UInt, port)
     @debugv 2 "TCP connect: $host:$p..."
@@ -510,7 +483,8 @@ function getconnection(::Type{TCPSocket},
     err = ErrorException("failed to connect")
     for addr in addrs
         try
-            tcp = Sockets.connect(addr, p)
+            tcp = T()
+            Sockets.connect!(tcp, addr, p)
             keepalive && keepalive!(tcp)
             return tcp
         catch e
