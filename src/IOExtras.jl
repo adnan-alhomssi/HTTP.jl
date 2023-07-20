@@ -94,12 +94,17 @@ localport(io) = try !isopen(tcpsocket(io)) ? 0 :
                 end
 
 function safe_getpeername(io)
-    try
-        if isopen(tcpsocket(io))
-            return Sockets.getpeername(tcpsocket(io))
-        end
-    catch
-    end
+    # This segfaults:
+    # cf. old discussion
+    # https://github.com/JuliaLang/julia/commit/28e30a395318da5892e73c0e7b4ad6dbb0a14199
+    # probably missing iolock_begin/iolock_end?
+    # https://github.com/JuliaWeb/HTTP.jl/commit/7e4420d0733c87b3664657ac22d1bdc2fb86d789
+    # try
+    #     if isopen(tcpsocket(io))
+    #         return Sockets.getpeername(tcpsocket(io))
+    #     end
+    # catch
+    # end
     return IPv4(0), UInt16(0)
 end
 
